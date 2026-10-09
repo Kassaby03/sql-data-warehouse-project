@@ -1,4 +1,18 @@
 Use DataWarehouse;
+/*
+===============================================================================
+DDL Script: Create Bronze Tables
+===============================================================================
+Script Purpose:
+    This script creates tables in the 'bronze' schema, dropping existing tables 
+    if they already exist.
+	  Run this script to re-define the DDL structure of 'bronze' Tables
+===============================================================================
+*/
+
+IF OBJECT_ID('bronze.crm_cust_info', 'U') IS NOT NULL
+    DROP TABLE bronze.crm_cust_info;
+GO
 
 create table bronze.crm_cust_info(
 cst_id INT ,
@@ -9,6 +23,11 @@ cst_martial_status NVARCHAR(50),
 cst_gndr NVARCHAR(50),
 create_date DATE
 );
+
+GO
+    IF OBJECT_ID ('bronze.crm_prd_info','U') is NOT NULL
+    DROP TABLE bronze.crm_prd_info;
+GO
 
 create table bronze.crm_prd_info(
 prd_id INT,
@@ -21,6 +40,7 @@ prd_end_dt datetime
 
 );
 
+GO
 
 create table bronze.crm_sales_details(
 sls_ord_num NVARCHAR(50),
@@ -32,4 +52,36 @@ sls_due_dt INT,
 sls_sales INT,
 sls_quantity INT,
 sls_price INT
+);
+
+GO
+
+
+create table bronze.erp_cust_az12(
+
+cid NVARCHAR(50),
+bdate DATE,
+gen NVARCHAR(50)
+
+);
+
+GO
+
+
+create table bronze.erp_loc_a101(
+
+cid NVARCHAR(50),
+cntry NVARCHAR(50)
+
+);
+
+GO
+
+create table bronze.px_cat_g1v2(
+
+id NVARCHAR(50),
+cat NVARCHAR(50),
+subcat NVARCHAR(50),
+maintenance NVARCHAR(50)
+
 );

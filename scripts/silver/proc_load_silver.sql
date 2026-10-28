@@ -34,17 +34,7 @@ FROM
 ) t
 where flag_last=1
 
-select * from silver.crm_cust_info
 
-/*
-select prd_id ,
-count(*)
-from bronze.crm_prd_info
-group by prd_id
-having count(*)>1 or count(*) is null
-*/
-
-select * from bronze.crm_prd_info
 
 
 insert into silver.crm_prd_info
@@ -75,11 +65,54 @@ cast(prd_start_dt AS DATE),
 cast(LEAD(prd_start_dt) over(partition by prd_key order by prd_start_dt)-1 AS DATE) prd_end_dt
 from bronze.crm_prd_info
 
-select distinct prd_line
-from bronze.crm_prd_info
+
+INSERT INTO silver.crm_sales_details
+(
+sls_ord_num,
+sls_prd_key ,
+sls_cust_id ,
+sls_order_dt,
+sls_ship_dt ,
+sls_due_dt ,
+sls_sales ,
+sls_quantity ,
+sls_price 
+
+)
+
+select 
+sls_ord_num,
+sls_prd_key,
+sls_cust_id,
+case 
+  when sls_order_dt=0 or LEN(sls_order_dt)!=8 THEN NULL
+  ELSE CAST(CAST(sls_order_dt as varchar) AS DATE)
+END as sls_order_dt,
+case 
+    when sls_ship_dt=0 or LEN(sls_ship_dt)!=8 THEN NULL
+    ELSE CAST(CAST(sls_ship_dt as varchar) AS DATE)
+END as sls_ship_dt,
+CASE
+    when sls_due_dt=0 or LEN(sls_due_dt)!=8 THEN NULL
+    ELSE CAST(CAST(sls_due_dt as varchar) AS DATE)
+END as sls_due_dt,
+case 
+	when sls_sales<0 or sls_sales is null or sls_sales != sls_quantity * ABS(sls_price)
+	THEN sls_quantity * ABS(sls_price)
+	else sls_sales
+End as sls_sales,
+
+sls_quantity,
+
+CASE 
+	WHEN sls_price<0 or sls_price is null 
+	THEN sls_sales/nullif(sls_quantity,0)
+	ELSE sls_price
+END as sls_price
+from bronze.crm_sales_details
 
 
-select * from 
-bronze.crm_prd_info
-where prd_end_dt < prd_start_dt or prd_end_dt is null or prd_start_dt is null
 
+select * from silver.crm_sales_details
+where sls_order_dt > sls_ship_dt or sls_order_dt > sls_due_dt or sls_sales<0 or sls_sales is null or sls_price<0 or sls_price is null 
+or sls_sales != sls_price * sls_quantity
